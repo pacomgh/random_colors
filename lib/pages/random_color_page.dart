@@ -23,6 +23,7 @@ class _RandomColorPageState extends State<RandomColorPage> {
   final random = Random();
   bool showSurprise = false, showCustom = false, showFun = false;
   Timer? timer;
+  double randomWith = 0, randomHeight = 0;
 
   @override
   void initState() {
@@ -52,9 +53,7 @@ class _RandomColorPageState extends State<RandomColorPage> {
               backgroundColor = generateRandomColor(changeOpacity: false);
               debugPrint('🌟 ${isDark(backgroundColor!)}');
               debugPrint('🌟 ${backgroundColor!.g}');
-              textColor = isDark(backgroundColor!)
-                  ? Colors.white
-                  : Colors.black;
+              changeTextColor();
             });
           },
           child: AnimatedContainer(
@@ -75,6 +74,14 @@ class _RandomColorPageState extends State<RandomColorPage> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                ),
+                Text(
+                  'Tap to change color',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
@@ -146,9 +153,12 @@ class _RandomColorPageState extends State<RandomColorPage> {
                       ],
                     ),
                   ),
+                SizedBox(height: 20),
                 if (showCustom)
                   Column(
                     children: [
+                      Text('Red', style: TextStyle(color: textColor)),
+                      SizedBox(height: 5),
                       Slider(
                         value: red.toDouble(),
                         min: 0,
@@ -162,10 +172,14 @@ class _RandomColorPageState extends State<RandomColorPage> {
                               blue,
                               sliderBackgroundOpacity,
                             );
+                            changeTextColor();
                           });
+
                           debugPrint('🟢 $backgroundColor');
                         },
                       ),
+                      Text('Blue', style: TextStyle(color: textColor)),
+                      SizedBox(height: 5),
                       Slider(
                         value: green.toDouble(),
                         min: 0,
@@ -179,10 +193,13 @@ class _RandomColorPageState extends State<RandomColorPage> {
                               blue,
                               sliderBackgroundOpacity,
                             );
+                            changeTextColor();
                           });
                           debugPrint('🟢 $backgroundColor');
                         },
                       ),
+                      Text('Green', style: TextStyle(color: textColor)),
+                      SizedBox(height: 5),
                       Slider(
                         value: blue.toDouble(),
                         min: 0,
@@ -196,19 +213,12 @@ class _RandomColorPageState extends State<RandomColorPage> {
                               blue,
                               sliderBackgroundOpacity,
                             );
+                            changeTextColor();
                           });
                           debugPrint('🟢 $backgroundColor');
                         },
                       ),
-                      if (showFun)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 800),
-                          curve: Curves.easeInOut,
-                          decoration: BoxDecoration(
-                            color: animatedBackgroundColor,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
+
                       // Slider(
                       //   value: sliderBackgroundOpacity,
                       //   min: 0,
@@ -227,6 +237,18 @@ class _RandomColorPageState extends State<RandomColorPage> {
                       //   },
                       // ),
                     ],
+                  ),
+                SizedBox(height: 20),
+                if (showFun)
+                  AnimatedContainer(
+                    width: randomWith != 0 ? randomWith : 100,
+                    height: randomHeight != 0 ? randomHeight : 100,
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeInOut,
+                    decoration: BoxDecoration(
+                      color: animatedBackgroundColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
               ],
             ),
@@ -248,28 +270,49 @@ class _RandomColorPageState extends State<RandomColorPage> {
     );
   }
 
+  Color generateRandomColorFun() {
+    animatedRed = random.nextInt(256);
+    animatedBlue = random.nextInt(256);
+    animatedGreen = random.nextInt(256);
+    return Color.fromRGBO(
+      animatedRed,
+      animatedBlue,
+      animatedGreen,
+      sliderBackgroundOpacity,
+    );
+  }
+
   bool isDark(Color color) {
     double luminance = color.computeLuminance();
     return luminance < 0.5;
   }
 
+  (double, double) randomContainerSize() {
+    return (random.nextDouble() * 100, random.nextDouble() * 100);
+  }
+
+  Color changeTextColor() {
+    return textColor = isDark(backgroundColor!) ? Colors.white : Colors.black;
+  }
+
   void animateColors() {
-    print('🌟animate colors');
+    // print('🌟animate colors');
     timer?.cancel();
+    double width = 0;
+    double height = 0;
     timer = Timer.periodic(const Duration(seconds: 2), (timer) {
       setState(() {
-        animatedRed = random.nextInt(256);
-        animatedBlue = random.nextInt(256);
-        animatedGreen = random.nextInt(256);
+        animatedBackgroundColor = generateRandomColorFun();
         backgroundColor = generateRandomColor(changeOpacity: false);
-        print('🌟 main color $backgroundColor');
-        textColor = isDark(backgroundColor!) ? Colors.white : Colors.black;
-        animatedBackgroundColor = Color.fromRGBO(
-          animatedRed,
-          animatedGreen,
-          animatedBlue,
-          sliderBackgroundOpacity,
-        );
+        // print('🌟 main color $backgroundColor');
+        changeTextColor();
+        (width, height) = randomContainerSize();
+        randomWith = width;
+        randomHeight = height;
+        // print('🌟 random wi $randomWith');
+        // print('🌟 random he $randomHeight');
+
+        // print('🌟 animated back colo $animatedBackgroundColor');
       });
     });
   }
