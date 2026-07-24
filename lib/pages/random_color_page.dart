@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -11,15 +12,28 @@ class RandomColorPage extends StatefulWidget {
 
 class _RandomColorPageState extends State<RandomColorPage> {
   double sliderBackgroundOpacity = 1.0;
-  Color? backgroundColor;
+  Color? backgroundColor, animatedBackgroundColor;
+  int red = 0,
+      green = 0,
+      blue = 0,
+      animatedRed = 0,
+      animatedBlue = 0,
+      animatedGreen = 0;
   Color textColor = Color.fromRGBO(0, 0, 0, 1.0);
   final random = Random();
   bool showSurprise = false, showCustom = false, showFun = false;
+  Timer? timer;
 
   @override
   void initState() {
     super.initState();
     backgroundColor = Color.fromRGBO(255, 255, 255, 0);
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -43,8 +57,10 @@ class _RandomColorPageState extends State<RandomColorPage> {
                   : Colors.black;
             });
           },
-          child: Container(
+          child: AnimatedContainer(
             color: backgroundColor,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
             width: double.infinity,
             height: double.infinity,
             child: Column(
@@ -69,15 +85,16 @@ class _RandomColorPageState extends State<RandomColorPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                SizedBox(height: 10),
                 if (showSurprise)
                   Container(
-                    color: Colors.white,
                     width: double.infinity,
                     alignment: AlignmentGeometry.center,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Column(
                               children: [
@@ -85,11 +102,19 @@ class _RandomColorPageState extends State<RandomColorPage> {
                                   value: showCustom,
                                   onChanged: (bool value) {
                                     setState(() {
+                                      if (showFun) {
+                                        showFun = false;
+                                        timer?.cancel();
+                                      }
+
                                       showCustom = value;
                                     });
                                   },
                                 ),
-                                Text('Custom Color'),
+                                Text(
+                                  'Custom Color',
+                                  style: TextStyle(color: textColor),
+                                ),
                               ],
                             ),
                             SizedBox(width: 10),
@@ -99,11 +124,21 @@ class _RandomColorPageState extends State<RandomColorPage> {
                                   value: showFun,
                                   onChanged: (bool value) {
                                     setState(() {
+                                      if (showCustom) showCustom = false;
                                       showFun = value;
                                     });
+                                    if (showFun) {
+                                      animateColors();
+                                    } else {
+                                      timer?.cancel();
+                                      print('🛑 animate colors detenido');
+                                    }
                                   },
                                 ),
-                                Text('Tap for fun'),
+                                Text(
+                                  'Tap for fun',
+                                  style: TextStyle(color: textColor),
+                                ),
                               ],
                             ),
                           ],
@@ -115,53 +150,82 @@ class _RandomColorPageState extends State<RandomColorPage> {
                   Column(
                     children: [
                       Slider(
-                        value: backgroundColor!.r.toDouble(),
+                        value: red.toDouble(),
                         min: 0,
                         max: 255,
                         onChanged: (double value) {
                           setState(() {
+                            red = value.toInt();
                             backgroundColor = Color.fromRGBO(
-                              backgroundColor!.r.toInt(),
-                              backgroundColor!.g.toInt(),
-                              backgroundColor!.b.toInt(),
-                              1.0,
+                              red,
+                              green,
+                              blue,
+                              sliderBackgroundOpacity,
                             );
                           });
                           debugPrint('🟢 $backgroundColor');
                         },
                       ),
                       Slider(
-                        value: backgroundColor!.r.toDouble(),
+                        value: green.toDouble(),
                         min: 0,
                         max: 255,
                         onChanged: (double value) {
                           setState(() {
+                            green = value.toInt();
                             backgroundColor = Color.fromRGBO(
-                              backgroundColor!.r.toInt(),
-                              backgroundColor!.g.toInt(),
-                              backgroundColor!.b.toInt(),
-                              1.0,
+                              red,
+                              green,
+                              blue,
+                              sliderBackgroundOpacity,
                             );
                           });
                           debugPrint('🟢 $backgroundColor');
                         },
                       ),
                       Slider(
-                        value: backgroundColor!.b.toDouble(),
+                        value: blue.toDouble(),
                         min: 0,
                         max: 255,
                         onChanged: (double value) {
                           setState(() {
+                            blue = value.toInt();
                             backgroundColor = Color.fromRGBO(
-                              backgroundColor!.r.toInt(),
-                              backgroundColor!.g.toInt(),
-                              backgroundColor!.b.toInt(),
-                              1.0,
+                              red,
+                              green,
+                              blue,
+                              sliderBackgroundOpacity,
                             );
                           });
                           debugPrint('🟢 $backgroundColor');
                         },
                       ),
+                      if (showFun)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 800),
+                          curve: Curves.easeInOut,
+                          decoration: BoxDecoration(
+                            color: animatedBackgroundColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                      // Slider(
+                      //   value: sliderBackgroundOpacity,
+                      //   min: 0,
+                      //   max: 255,
+                      //   onChanged: (double value) {
+                      //     setState(() {
+                      //       sliderBackgroundOpacity = value;
+                      //       backgroundColor = Color.fromRGBO(
+                      //         red,
+                      //         green,
+                      //         blue,
+                      //         sliderBackgroundOpacity,
+                      //       );
+                      //     });
+                      //     debugPrint('🟢 $backgroundColor');
+                      //   },
+                      // ),
                     ],
                   ),
               ],
@@ -173,16 +237,40 @@ class _RandomColorPageState extends State<RandomColorPage> {
   }
 
   Color generateRandomColor({required bool changeOpacity}) {
+    red = random.nextInt(256);
+    blue = random.nextInt(256);
+    green = random.nextInt(256);
     return Color.fromRGBO(
-      backgroundColor!.r.toInt(),
-      backgroundColor!.g.toInt(),
-      backgroundColor!.b.toInt(),
-      changeOpacity ? random.nextDouble() * 1.0 : 1.0,
+      red,
+      green,
+      blue,
+      changeOpacity ? random.nextDouble() * 1.0 : sliderBackgroundOpacity,
     );
   }
 
   bool isDark(Color color) {
     double luminance = color.computeLuminance();
     return luminance < 0.5;
+  }
+
+  void animateColors() {
+    print('🌟animate colors');
+    timer?.cancel();
+    timer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      setState(() {
+        animatedRed = random.nextInt(256);
+        animatedBlue = random.nextInt(256);
+        animatedGreen = random.nextInt(256);
+        backgroundColor = generateRandomColor(changeOpacity: false);
+        print('🌟 main color $backgroundColor');
+        textColor = isDark(backgroundColor!) ? Colors.white : Colors.black;
+        animatedBackgroundColor = Color.fromRGBO(
+          animatedRed,
+          animatedGreen,
+          animatedBlue,
+          sliderBackgroundOpacity,
+        );
+      });
+    });
   }
 }
